@@ -297,8 +297,9 @@ double JetPlusTrackCorrector::correction(const reco::Jet& fJet,
        for (muon = muons->begin(); muon != muons->end(); ++muon) {
 	 // muon id here
 	 // track quality requirements are general and should be done elsewhere
-	 if (! muon->isGood(reco::Muon::TMLastStationTight) || 
-	     muon->innerTrack()->pt()<3.0 ) continue;
+	 if ( muon->innerTrack().isNull() ||
+	      !muon->isGood(reco::Muon::TMLastStationTight) ||
+	      muon->innerTrack()->pt()<3.0 ) continue;
 	 if (itV->id() != muon->innerTrack().id())
 	     throw cms::Exception("FatalError") 
 	       << "Product id of the tracks associated to the jet " << itV->id() 
@@ -347,8 +348,9 @@ double JetPlusTrackCorrector::correction(const reco::Jet& fJet,
 	       for (muon = muons->begin(); muon != muons->end(); ++muon) {
 		 // muon id here
 		 // track quality requirements are general and should be done elsewhere
-		 if (! muon->isGood(reco::Muon::TMLastStationTight) || 
-		     muon->innerTrack()->pt()<3.0 ) continue;
+		 if ( muon->innerTrack().isNull() ||
+		      !muon->isGood(reco::Muon::TMLastStationTight) ||
+		      muon->innerTrack()->pt()<3.0 ) continue;
 		 if (itC->id() != muon->innerTrack().id())
 		   throw cms::Exception("FatalError") 
 		     << "Product id of the tracks associated to the jet " << itC->id() 
