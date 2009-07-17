@@ -11,6 +11,8 @@
 //#include "DataFormats/TrackReco/interface/Track.h"
 //#include "DataFormats/MuonReco/interface/MuonFwd.h"
 //
+#include "DataFormats/Common/interface/View.h"
+#include "DataFormats/PatCandidates/interface/Muon.h"
 
 // Added by R.B.
 #include "DataFormats/Common/interface/Handle.h"
@@ -199,8 +201,8 @@ double JetPlusTrackCorrector::correction(const reco::Jet& fJet,
                                          const edm::EventSetup& theEventSetup) const 
 {
 
-   bool debug = false;
-   //bool debug = true;
+  //bool debug = false;
+   bool debug = true;
 
    double NewResponse = fJet.energy();
 
@@ -208,22 +210,44 @@ double JetPlusTrackCorrector::correction(const reco::Jet& fJet,
 
    if(fabs(fJet.eta())>2.1) {return NewResponse/fJet.energy();}
 
-   // Get muons
-   edm::Handle<reco::MuonCollection> muons;
-   reco::MuonCollection::const_iterator muon;
-   iEvent.getByLabel(m_muonsSrc, muons);
+   // Hack to allow use of pat::Muons
+   std::vector<const reco::Muon*> muons;
+   std::vector<const reco::Muon*>::const_iterator muon;
    
-   if(debug){
-   cout <<" muon collection size = " << muons->size() << endl;   
-
-   if(muons->size() != 0) {
-     for (muon = muons->begin(); muon != muons->end(); ++muon) {
-       //reco::TrackRef glbTrack = muon->combinedMuon();
-       cout <<" muon pT = " << muon->pt() 
-	    <<" muon eta = " << muon->eta()
-	    <<" muon phi = " << muon->phi() << endl;  
+   // Get muons
+   {
+     edm::Handle<reco::MuonCollection> reco_muons;
+     iEvent.getByLabel( m_muonsSrc, reco_muons );
+     if ( reco_muons.isValid() && !reco_muons.failedToGet() ) {
+       reco::MuonCollection::const_iterator ii = reco_muons->begin();
+       reco::MuonCollection::const_iterator jj = reco_muons->end();
+       for ( ; ii != jj; ++ii ) { muons.push_back( &*ii ); }
+     } else {
+       edm::Handle< edm::View<pat::Muon> > pat_muons;
+       iEvent.getByLabel( m_muonsSrc, pat_muons );
+       if ( pat_muons.isValid() && !pat_muons.failedToGet() ) {
+	 edm::View<pat::Muon>::const_iterator ii = pat_muons->begin();
+	 edm::View<pat::Muon>::const_iterator jj = pat_muons->end();
+	 for ( ; ii != jj; ++ii ) { muons.push_back( &*ii ); }
+       } else {
+	 edm::LogWarning("JetPlusTrackCorrector")
+	   << "[JetPlusTrackCorrector::correction]"
+	   << " Cannot retrieve reco::Muon or pat::Muon collections!";
+       }
      }
    }
+   
+   if(debug){
+     cout <<" muon collection size = " << muons.size() << endl;   
+     
+     if(muons.size() != 0) {
+       for (muon = muons.begin(); muon != muons.end(); ++muon) {
+	 //reco::TrackRef glbTrack = muon->combinedMuon();
+	 cout <<" muon pT = " << (*muon)->pt() 
+	      <<" muon eta = " << (*muon)->eta()
+	      <<" muon phi = " << (*muon)->phi() << endl;  
+       }
+     }
    }
 
    // Added by R.B.
@@ -352,17 +376,17 @@ double JetPlusTrackCorrector::correction(const reco::Jet& fJet,
        double ptV = (*itV)->pt();
        // check if it is muon
        bool ismuon(false);
-       for (muon = muons->begin(); muon != muons->end(); ++muon) {
+       for (muon = muons.begin(); muon != muons.end(); ++muon) {
 	 // muon id here
 	 // track quality requirements are general and should be done elsewhere
-	 if (! muon->isGood(reco::Muon::TMLastStationTight) || 
-	     muon->innerTrack()->pt()<3.0 ) continue;
-	 if (itV->id() != muon->innerTrack().id())
+	 if (! (*muon)->isGood(reco::Muon::TMLastStationTight) || 
+	     (*muon)->innerTrack()->pt()<3.0 ) continue;
+	 if (itV->id() != (*muon)->innerTrack().id())
 	     throw cms::Exception("FatalError") 
 	       << "Product id of the tracks associated to the jet " << itV->id() 
-	       <<" is different from the product id of the inner track used for muons " << muon->innerTrack().id()
+	       <<" is different from the product id of the inner track used for muons " << (*muon)->innerTrack().id()
 	       << "\nCannot compare tracks from different collection. Configuration Error\n";
-	   if (*itV == muon->innerTrack()) {
+	   if (*itV == (*muon)->innerTrack()) {
 	     ismuon = true;
 	     break;
 	   }
@@ -402,17 +426,17 @@ double JetPlusTrackCorrector::correction(const reco::Jet& fJet,
 	     {
 	       // check if it is muon
 	       bool ismuon(false);
-	       for (muon = muons->begin(); muon != muons->end(); ++muon) {
+	       for (muon = muons.begin(); muon != muons.end(); ++muon) {
 		 // muon id here
 		 // track quality requirements are general and should be done elsewhere
-		 if (! muon->isGood(reco::Muon::TMLastStationTight) || 
-		     muon->innerTrack()->pt()<3.0 ) continue;
-		 if (itC->id() != muon->innerTrack().id())
+		 if (! (*muon)->isGood(reco::Muon::TMLastStationTight) || 
+		     (*muon)->innerTrack()->pt()<3.0 ) continue;
+		 if (itC->id() != (*muon)->innerTrack().id())
 		   throw cms::Exception("FatalError") 
 		     << "Product id of the tracks associated to the jet " << itC->id() 
-		     <<" is different from the product id of the inner track used for muons " << muon->innerTrack().id()
+		     <<" is different from the product id of the inner track used for muons " << (*muon)->innerTrack().id()
 		     << "\nCannot compare tracks from different collection. Configuration Error\n";
-		 if (*itC == muon->innerTrack()) {
+		 if (*itC == (*muon)->innerTrack()) {
 		   ismuon = true;
 		   break;
 		 }
@@ -433,7 +457,7 @@ double JetPlusTrackCorrector::correction(const reco::Jet& fJet,
      std::cout<<" Size of theRecoMuonTracksInConeInVertex " << muInCaloInVertex.size()<<std::endl;  
      std::cout<<" Size of theRecoMuonTracksOutOfConeInVertex " << muOutOfCaloInVertex.size()<<std::endl;
      std::cout<<" Size of theRecoMuonTracksInConeOutOfVertex " << muInCaloOutOfVertex.size()<<std::endl; 
-     std::cout <<" muon collection size = " << muons->size() << std::endl;  
+     std::cout <<" muon collection size = " << muons.size() << std::endl;  
    }
    //
    // If track is out of cone at Vertex level but come in at Calo cone subtract response but do not add
