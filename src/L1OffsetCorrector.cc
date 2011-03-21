@@ -58,7 +58,6 @@ double L1OffsetCorrector::correction(const reco::Jet& fJet) const
 //--- Returns correction for a given jet using event indormation ---------
 //------------------------------------------------------------------------
 double L1OffsetCorrector::correction(const reco::Jet& fJet, 
-                                     const edm::RefToBase<reco::Jet>& fJetRef,
                                      const edm::Event& fEvent, 
                                      const edm::EventSetup& fSetup) const 
 {

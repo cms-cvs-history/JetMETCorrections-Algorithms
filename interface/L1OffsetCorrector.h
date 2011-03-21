@@ -31,7 +31,6 @@ class L1OffsetCorrector : public JetCorrector
 
     //----- apply correction using all event information
     virtual double correction(const reco::Jet& fJet, 
-                              const edm::RefToBase<reco::Jet>& fJetRef,
                               const edm::Event& fEvent, 
                               const edm::EventSetup& fSetup) const;
 

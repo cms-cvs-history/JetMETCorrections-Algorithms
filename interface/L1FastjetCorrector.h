@@ -30,7 +30,6 @@ public:
   virtual double correction(const reco::Jet& fJet) const;
   /// apply correction using all event information
   virtual double correction(const reco::Jet& fJet,
-			    const edm::RefToBase<reco::Jet>& fJetRef,
 			    const edm::Event& fEvent,
 			    const edm::EventSetup& fSetup) const;
   /// if correction needs event information
