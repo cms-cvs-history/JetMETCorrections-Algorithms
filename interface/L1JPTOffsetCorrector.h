@@ -33,9 +33,9 @@ class L1JPTOffsetCorrector : public JetCorrector
     virtual double correction(const reco::Jet& fJet, 
                               const edm::Event& fEvent, 
                               const edm::EventSetup& fSetup) const;
-
     //----- if correction needs event information -------------
     virtual bool eventRequired() const {return true;} 
+    virtual bool refRequired() const {return false;}
 
   private:
     //----- member data ---------------------------------------
