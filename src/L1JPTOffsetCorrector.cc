@@ -68,7 +68,6 @@ double L1JPTOffsetCorrector::correction(const reco::Jet& fJet,
   double result = 1.;
   const reco::JPTJet& jptjet = dynamic_cast <const reco::JPTJet&> (fJet);
   edm::RefToBase<reco::Jet> jptjetRef = jptjet.getCaloJetRef();
-  double zspcor_old = jptjet.getZSPCor();
   reco::CaloJet const * rawcalojet = dynamic_cast<reco::CaloJet const *>( &* jptjetRef);   
   //------ access the offset correction service ----------------
   double offset = 1.0;
@@ -77,9 +76,9 @@ double L1JPTOffsetCorrector::correction(const reco::Jet& fJet,
     offset = OffsetCorrector->correction(*rawcalojet,fEvent,fSetup); 
   }
   //------ calculate the correction for the JPT jet ------------
-  TLorentzVector JPTrawP4(offset*rawcalojet->px(),offset*rawcalojet->py(),offset*rawcalojet->pz(),offset*rawcalojet->energy());
+  TLorentzVector JPTrawP4(rawcalojet->px(),rawcalojet->py(),rawcalojet->pz(),rawcalojet->energy());
   mCorrector->setJPTrawP4(JPTrawP4);
-  mCorrector->setJPTrawZSP(zspcor_old);
+  mCorrector->setJPTrawOff(offset);
   mCorrector->setJetE(fJet.energy());
   result = mCorrector->getCorrection();
   return result;
